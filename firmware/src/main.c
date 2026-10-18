@@ -29,6 +29,9 @@ void fm1_timer5_irq(void)
     melodee_dbg.timer_irqs++;
     AP_START(input_start);fm1_input_tick();
     if(melodee_dbg.in_audio){AP_END(AP_INPUT,input_start);}
+#if BOARD_SMK37
+    smo_tick();                                 /* TRS MIDI OUT: at most one byte, never waits */
+#endif
     {   /* milliseconds from the 24 MHz TIMER4 (robust to a late tick) */
         static uint32_t last, acc;
         acc += t0 - last;
@@ -112,6 +115,14 @@ static void hexs(char *b, uint32_t v)
 }
 
 #if BOARD_SMK37
+/* the menu's TRS MIDI OUT to the jack's queue (settings load, restore, the menu): ON again tries the UART again */
+static void smo_sync(void)
+{
+    uint32_t on = !(GLO_SELECT & TRS_OUT_OFF);
+    if (on != trs_out)
+        smo_on(on);
+}
+
 /* pads as a step grid (1-8 top row): SEQ held (patterns), the DRUM grid, NAME, the layers' tiles (not SCL: notes) */
 static void smk_grid(void)
 {
@@ -379,6 +390,9 @@ static void fm1_main(void)
 #if MELODEE_UART
     uart_midi_init();
 #endif
+#if BOARD_SMK37
+    smk_uart1_tx_init();                      /* TRS MIDI OUT (before TIMER5 sends) */
+#endif
     timer5_start();
     fm1_guard_lock_top();
     fm1_irq_enable_all();
@@ -488,6 +502,7 @@ static void fm1_main(void)
         melodee_dbg.stage = 2;
 #if BOARD_SMK37
         smk_grid();
+        smo_sync();
 #endif
         ui_leds();
 #if BOARD_SMK37

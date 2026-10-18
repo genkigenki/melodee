@@ -45,7 +45,9 @@ The FM-1's manual still applies; the SMK-37's controls map onto the FM-1's like 
 | OCTAVE- held at power-on | the boot stub's rescue: update mode |
 
 Project slots A and B are stored on the SMK-37; C and D have no flash there ("SMK: PROJECTS A, B ONLY"). The
-SMK-37's TRS jack is a MIDI output and this build does not use it; there is no TRS MIDI IN. MIDI works over USB.
+SMK-37's TRS jack is MIDI OUT: it sends what USB MIDI sends (the keys' and pads' notes on the track's channel, the mod
+wheel's CC1), with or without a computer. HOME menu > TRS MIDI OUT turns it ON (default) or OFF. There is no TRS MIDI IN;
+MIDI IN works over USB.
 
 ## Build
 

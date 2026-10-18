@@ -192,6 +192,9 @@ smk_packages() {                                  # SMK-37 layout packages of th
         python3 tools/fm1pkg_make.py --board smk37 "$OUT/smk_old_app.bin" build/loader/ota.bin "$OUT/smk_old.fwsc" >/dev/null
 }
 smk_tests() {                                     # the SMK-37 (SMK37.md): flash map and store, package, update entry, loader
+    build smk_midi_out_test smk_midi_out_test &&
+        step "SMK-37 TRS MIDI OUT: USB-MIDI packets to bytes, the ring, one byte a tick, OFF, no UART: no stall" \
+            "$OUT/smk_midi_out_test"
     build smk_flash_test smk_flash_test -DBOARD_SMK37=1 -Ifirmware/hal &&
         step "SMK-37 flash map and store: never the head, BTIF/USRTRIM, USR, key_mac; the stock marker only released" \
             "$OUT/smk_flash_test"

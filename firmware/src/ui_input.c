@@ -465,7 +465,9 @@ static void smk_leds_out(const uint8_t *nl, const uint8_t *nd, const uint8_t *nb
         fm1_led[SMK_BTN_FADER_BANK] = smk_fbank != 0;   /* FADER BANK lit off bank A */
     if (panel_btn_of(SMK_BTN_KNOB_BANK) == NB)
         fm1_led[SMK_BTN_KNOB_BANK] = ui.menu != 0;      /* KNOB BANK lit while the menu is up */
-    if ((int32_t)(fm1_ms - padled_hold_until) < 0)
+    if (padled_hold_until && (int32_t)(fm1_ms - padled_hold_until) >= 0)
+        padled_hold_until = 0;                          /* (0: no hold, also after 24.8 days up) */
+    if (padled_hold_until)
         return;                                         /* (console padtest) */
     if (steps) {                                        /* playing: the selected track's steps on the page that plays */
         const track_t *t = TSEL;

@@ -833,7 +833,7 @@ static void ext_keys_block(void)
             ext_chn[k] = 0;
             continue;
         }
-        if (ext_chn[k] || (fm1_in.buttons & kb_mask) || song.grid)
+        if (ext_chn[k] || kb_asleep || kb_lock || (fm1_in.buttons & kb_mask) || song.grid)   /* (as the 27 keys) */
             continue;
         t = TSEL;
         n = smk_ext_map(t, (int32_t)k - (int32_t)SMK_KEY_F3);

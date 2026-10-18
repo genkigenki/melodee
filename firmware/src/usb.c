@@ -126,6 +126,9 @@ static int midi_enqueue(uint32_t pkt, uint32_t source)
 
 static void midi_out_event(uint32_t pkt)            /* from the audio ISR */
 {
+#if BOARD_SMK37 && defined(SMO_RING)                /* (the update loader has no TRS queue) */
+    smo_put(pkt);                                   /* the TRS jack, with or without a computer */
+#endif
     if (usb.config && mo_w - mo_r < MQ) {
         midi_out_q[mo_w % MQ] = pkt;
         RING_PUBLISH();

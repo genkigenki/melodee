@@ -90,6 +90,7 @@ static void glo_select_set(uint32_t v) { GLO_SELECT = (uint8_t)((GLO_SELECT & ~0
 /* UNUSED TRACKS (the menu): HIDE in bit 5 of the same byte. SHOW (0): Stage and MIXER keep a greyed row for each
  * place not in use, saying "Add track"; HIDE: the tracks in use share the rows (one track: the wide card) */
 #define TRACKS_HIDE 32u
+#define TRS_OUT_OFF 64u                        /* (SMK-37) the menu's TRS MIDI OUT OFF (smk_midi_out.h) */
 static uint32_t stage_rows(void) { return GLO_SELECT & TRACKS_HIDE ? trk_n() : NTRK; }
 
 static uint8_t sync_reload;                  /* engine / preset / project / user preset loaded: editor RELOAD push */

@@ -101,6 +101,11 @@
 /* ------------------------------------------------- MIDI, sequencer --- */
 #define MIDI_TIME_NOW() fm1_ticks()
 #define MIDI_TICKS_PER_MS (1000u * FM1_TICKS_PER_US)
+#if BOARD_SMK37
+#include "smk_uart_tx.h"         /* TRS MIDI OUT: UART1 TX on PC7 */
+#define SMO_SECTION __attribute__((section(".pool"), aligned(4)))
+#include "smk_midi_out.h"        /* what goes out over USB MIDI, to the TRS jack too */
+#endif
 #include "usb.c"
 #if MELODEE_UART
 #include "midi_uart.c"

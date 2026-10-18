@@ -107,7 +107,7 @@ Target board: `BOARD=smk37 ./build.sh` (or `./build.sh --board smk37`) builds Me
 stub's lock (`firmware/stub/stub_smk37.lock`) and the package `build/melodee-smk37.fwsc`. `MODEL=elite` or `MODEL=mke`
 builds the same firmware under the SMK-37 Elite's or the MKE-P37's model name (`build/melodee-smk37-elite.fwsc`,
 `build/melodee-smk37-mke.fwsc`), so the stock updater still takes that unit's own package. TRS MIDI IN is off there
-(`MELODEE_UART=0`: PH8 is a key-matrix row). Controls: [SMK37.md](SMK37.md). The intermediate files
+(`MELODEE_UART=0`: PH8 is a key-matrix row); the jack is TRS MIDI OUT (UART1 TX on PC7, `firmware/src/smk_midi_out.h`). Controls: [SMK37.md](SMK37.md). The intermediate files
 (`build/melodee.bin`, `build/loader/ota.bin`, `build/gen/`) are shared: build the FM-1 again before
 `tests/run_tests.sh`. The default stays the FM-1, byte for byte.
 

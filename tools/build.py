@@ -593,7 +593,7 @@ def main():
             build_options={k:v for k,v in os.environ.items() if k.startswith(("MELODEE_", "P5_"))},
             cflags=CFLAGS), indent=2)+'\n')
     if a.release:                   # what a release carries: the package, the app and every licence they need
-        rel = OUT / f"release-{a.release}"
+        rel = OUT / (f"release-{a.release}" if BOARD == "fm1" else f"release-{stem}-{a.release}")   # (one per model)
         shutil.rmtree(rel, ignore_errors=True)
         (rel / "LICENSES").mkdir(parents=True)
         app = f"{stem}-{a.release}-app.bin"

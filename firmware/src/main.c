@@ -432,7 +432,7 @@ static void fm1_main(void)
     fm1_input_init();
     fm1_adc_init();
 #if BOARD_SMK37 && MELODEE_FLASH
-    if (flash_ok)                                   /* the factory key / pad velocity curves (USRTRIM, read only) */
+    if (flash_ok || st_foreign)                     /* the factory key / pad velocity curves (USRTRIM, read only) */
         smk_trim_load(fm1_xip_ptr(SMK_TRIM_FLASH));
 #endif
     panel_init();

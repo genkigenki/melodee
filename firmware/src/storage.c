@@ -176,11 +176,13 @@ static void st_stock_release(void)              /* erase the marker's sector, on
         st_erase(FL_STOCKTAG_LO);
 }
 static inline int st_in_usrflash(uint32_t off) { return off >= FL_UFL_LO && off < FL_STOCKTAG_LO; }
-static int st_owner_check(void)                    /* 1: another firmware's (or untagged) store was cleared */
+static uint8_t st_foreign;                         /* the store could not be cleared: RAM-only this boot (persist_boot) */
+static int st_owner_check(void)                    /* 1: another firmware's (or untagged) store was cleared; -1: an erase
+                                                    * failed: not tagged as ours, so the next boot clears it again */
 {
     static const char FAM[] = FELUCCA_DATA_FAMILY;
     uint8_t tag[16], want[16];
-    uint32_t i, erased = 1, ours = 1, s, cleared = 0, keep;
+    uint32_t i, erased = 1, ours = 1, s, cleared = 0, keep, bad = 0;
     for (i = 0; i < 16u; i++)
         want[i] = i < 9u ? (uint8_t)"SMK37DATA"[i] : i - 9u < sizeof FAM - 1u ? (uint8_t)FAM[i - 9u] : 0u;
     if (!st_stock_intact())
@@ -196,22 +198,22 @@ static int st_owner_check(void)                    /* 1: another firmware's (or 
     if (!erased || !FELUCCA_DATA_UNTAGGED_OK) {     /* not ours: clear the store */
         for (s = FL_DATA_LO; s < FL_DATA_HI; s += ST_SECTOR)
             if (s != ST_SMK_TAG) {
-                st_erase(s);
+                bad |= st_erase(s) != 0;
                 ST_IDLE();
             }
         keep = st_stock_intact();                   /* the stock mapping: kept until Melodee writes there */
         for (s = FL_UFL_LO; !keep && s < FL_UFL_HI; s += ST_SECTOR) {
-            st_erase(s);
+            bad |= st_erase(s) != 0;
             ST_IDLE();
         }
         for (s = FL_GAP_LO; s < FL_GAP_HI; s += ST_SECTOR) {
-            st_erase(s);
+            bad |= st_erase(s) != 0;
             ST_IDLE();
         }
         cleared = 1;
     }
-    st_erase(ST_SMK_TAG);
-    st_prog(ST_SMK_TAG, want, 16);
+    if (bad || st_erase(ST_SMK_TAG) || st_prog(ST_SMK_TAG, want, 16))
+        return -1;                                  /* the tag only over a store that is all ours */
     return (int)cleared;
 }
 #else

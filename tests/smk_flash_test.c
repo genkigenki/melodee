@@ -20,13 +20,15 @@
 
 /* a simulated NOR: the store owner check (storage.c st_owner_check) runs on it; writes outside FL_STORE_OK count */
 static uint8_t nor[0x100000];
-static uint32_t bad_writes, erases, tag_erases;
+static uint32_t bad_writes, erases, tag_erases, fail_erase;   /* fail_erase: that sector's erase fails (0: none) */
 static int st_read(uint32_t off, void *dst, uint32_t n) { if (off + n > sizeof nor) return -1; memcpy(dst, nor + off, n); return 0; }
 static void st_stock_release(void);
 static int st_in_usrflash(uint32_t off);
 static int st_erase(uint32_t off)
 {
     if ((!FL_STORE_OK(off, 0x1000u) && !FL_STOCKTAG_OK(off, 0x1000u)) || (off & 0xFFFu)) { bad_writes++; return -8; }
+    if (fail_erase && off == fail_erase)
+        return -1;
     if (off == FL_STOCKTAG_LO)
         tag_erases++;
     if (st_in_usrflash(off))                    /* (as storage_hw.c st_erase: the stock marker first) */
@@ -167,6 +169,13 @@ int main(void)
         memset(nor + ST_SMK_TAG, 0xFF, 0x1000u);            /* untagged (FELUCCA_DATA_UNTAGGED_OK=0): cleared */
         check("owner: an untagged store is cleared too (FELUCCA_DATA_UNTAGGED_OK=0)",
               st_owner_check() == 1 && nor[0x9D000u] == 0xFF && !memcmp(nor + ST_SMK_TAG, "SMK37DATAMELODEE", 16));
+        memset(nor + ST_SMK_TAG, 0xFF, 0x1000u);
+        memcpy(nor + ST_SMK_TAG, SLOOP_TAG, 16);
+        fail_erase = 0xA0000u;                              /* one sector of another port's store will not erase */
+        check("owner: an erase fails: -1, the other port's tag stays (cleared again at the next boot)",
+              st_owner_check() == -1 && !memcmp(nor + ST_SMK_TAG, SLOOP_TAG, 16));
+        fail_erase = 0;
+        check("... the next boot clears it and tags it", st_owner_check() == 1 && !memcmp(nor + ST_SMK_TAG, "SMK37DATAMELODEE", 16));
     }
     {   /* the stock mapping in USRFLASH: kept while intact, its marker released before Melodee's first write there
          * and at boot over anything else */

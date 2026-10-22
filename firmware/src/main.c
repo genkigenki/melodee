@@ -139,12 +139,49 @@ static void smk_grid(void)
  *               PHASE have envelopes of their own: no effect there)
  *   D FX        the selected track's FX rack: the MIX of slots 1, 2, 3 and its SEND to the shared FX
  * A fader takes over only once it moves (also after a bank or track change), so nothing jumps. Track parameters
- * go through motion_capture as a knob's do. */
+ * go through motion_capture as a knob's do. With NOTE REPEAT (the FM-1's LFO) held a fader's edit is momentary,
+ * as a knob's is (ui.c momentary_take): released, the value before comes back, and motion does not record it. */
+static void smk_fader_momentary(int16_t *vp, uint32_t native)   /* native: 2 CZ-1, 3 PROPHET (the whole sound) */
+{
+    uint32_t i, tr = song.sel;
+    if (!(fm1_in.buttons & (1u << panel.btn[B_LFO])))
+        return;
+    if (!momentary.active) {
+        momentary.track = (uint8_t)song.sel;
+        momentary.active = 1;
+    }
+    if (native && !momentary.native) {
+        fm1_irq_off();
+        momentary.native = (uint8_t)native;
+        memcpy(momentary.fm, fm6_patch[tr], sizeof momentary.fm);
+        memcpy(momentary.fn, fm6_fn[tr], FM6_NFN);
+        momentary.on = fm6_on[tr];
+        momentary.cz = cz_patch[tr];
+        momentary.p5 = *p5_patch_of(TSEL);
+        momentary.p5_voice = TSEL->p[P_VOICE];
+        momentary.p5_prio = TSEL->p[P_PRIO];
+        momentary.p5_detune = TSEL->p[P_DETUNE];
+        momentary.p5_alloc = TSEL->p[P_ALLOC];
+        fm1_irq_on();
+    }
+    if (vp) {
+        for (i = 0; i < momentary.count && momentary.ptr[i] != vp; i++)
+            ;
+        if (i == momentary.count && i < P_COUNT + G_COUNT) {
+            momentary.ptr[i] = vp;
+            momentary.value[i] = *vp;
+            momentary.count++;
+        }
+    }
+    ui.pg_down &= (ui_btnmask_t)~(1u << panel.btn[B_LFO]);   /* (the release opens no LFO page) */
+}
 static void smk_fader_param(track_t *t, uint32_t id, uint32_t v)
 {
     const param_desc_t *d = track_desc(t, id);
+    smk_fader_momentary(&t->p[id], 0);
     t->p[id] = (int16_t)(d->min + ((int32_t)d->max - d->min) * (int32_t)v / 127);
-    (void)motion_capture(t, id, t->p[id]);
+    if (!momentary.active)
+        (void)motion_capture(t, id, t->p[id]);
 }
 /* CZ-1: fader `slot` sets HOME's knob `slot` (ui.c stage_page), written into the tone as the knob does (ui_input.c) */
 static void smk_fader_cz(uint32_t slot, uint32_t v)
@@ -156,6 +193,7 @@ static void smk_fader_cz(uint32_t slot, uint32_t v)
     uint32_t tr = song.sel % NTRK, f;
     if (!d || !vp || d->max == d->min)
         return;
+    smk_fader_momentary(0, 2);
     *vp = (int16_t)(d->min + ((int32_t)d->max - d->min) * (int32_t)v / 127);
     f = motion_guard();
     motion_native_peek(TSEL, old);
@@ -194,17 +232,19 @@ static void smk_faders(void)
         last[i] = (uint8_t)v;
         switch (smk_fbank) {
         case 1:
-            if (p5)
+            if (p5) {
+                smk_fader_momentary(0, 3);
                 p5_edit_value(t, P5_FLT[i], (int32_t)v);
-            else if (cz)
+            } else if (cz)
                 smk_fader_cz(i, v);
             else
                 smk_fader_param(t, e->knob[i], v);
             break;
         case 2:
-            if (p5)
+            if (p5) {
+                smk_fader_momentary(0, 3);
                 p5_edit_value(t, P5_AMP[i], (int32_t)v);
-            else if (!e->ownenv)
+            } else if (!e->ownenv)
                 smk_fader_param(t, ENV[i], v);
             break;
         case 3:

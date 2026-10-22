@@ -133,7 +133,8 @@ static void smk_grid(void)
 /* the SMK-37's 4 faders, by FADER BANK (ui_input.c smk_fbank):
  *   A LEVEL     the levels of tracks 1..4
  *   B FILTER    the selected track: PROPHET its CUTOFF, RESONANCE, filter ENV AMOUNT, filter DECAY (the panel's
- *               own values); any other engine its four HOME knobs (the engine's own choice of live controls)
+ *               own values); CZ-1 its HOME knobs (line 1's wave and DCW peak, detune, vibrato: the tone's own
+ *               values); any other engine its four HOME knobs (the engine's own choice of live controls)
  *   C ENVELOPE  the selected track's amp ATTACK, DECAY, SUSTAIN, RELEASE (PROPHET: its amp envelope; CZ, FM6 and
  *               PHASE have envelopes of their own: no effect there)
  *   D FX        the selected track's FX rack: the MIX of slots 1, 2, 3 and its SEND to the shared FX
@@ -144,6 +145,27 @@ static void smk_fader_param(track_t *t, uint32_t id, uint32_t v)
     const param_desc_t *d = track_desc(t, id);
     t->p[id] = (int16_t)(d->min + ((int32_t)d->max - d->min) * (int32_t)v / 127);
     (void)motion_capture(t, id, t->p[id]);
+}
+/* CZ-1: fader `slot` sets HOME's knob `slot` (ui.c stage_page), written into the tone as the knob does (ui_input.c) */
+static void smk_fader_cz(uint32_t slot, uint32_t v)
+{
+    const page_t *pg = stage_page();
+    int16_t *vp;
+    const param_desc_t *d = page_desc(pg, slot, &vp);
+    uint8_t raw[CZ_BYTES], old[MO_NATIVE_N];
+    uint32_t tr = song.sel % NTRK, f;
+    if (!d || !vp || d->max == d->min)
+        return;
+    *vp = (int16_t)(d->min + ((int32_t)d->max - d->min) * (int32_t)v / 127);
+    f = motion_guard();
+    motion_native_peek(TSEL, old);
+    if (cz_ed_put(tr, pg->id[slot], (uint32_t)*vp, raw)) {
+        if (!momentary.active)
+            cz_compare_take(tr);
+        memcpy(cz_patch[tr].raw, raw, 128u);
+        native_motion(old);
+    }
+    motion_unguard(f);
 }
 static void smk_faders(void)
 {
@@ -162,7 +184,7 @@ static void smk_faders(void)
         uint32_t v = fm1_in.fader[i];
         track_t *t = TSEL;
         const engine_t *e = ENGINES[eng_idx(t->eng_req)];
-        int p5 = t->eng_req == ENGI_PROPHET;
+        int p5 = t->eng_req == ENGI_PROPHET, cz = eng_idx(t->eng_req) == ENGI_CZ;
         if (last[i] == 0xFF || fm1_in.frames < 200u) {   /* (the first readings settle) */
             last[i] = (uint8_t)v;
             continue;
@@ -174,6 +196,8 @@ static void smk_faders(void)
         case 1:
             if (p5)
                 p5_edit_value(t, P5_FLT[i], (int32_t)v);
+            else if (cz)
+                smk_fader_cz(i, v);
             else
                 smk_fader_param(t, e->knob[i], v);
             break;

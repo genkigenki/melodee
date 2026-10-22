@@ -279,6 +279,16 @@ function filesOk(img) {
   return true;
 }
 
+// the logical image's flash.bin (UFW entry type 0): its offset in the image
+function flashOffset(img) {
+  const rd = (a, o, n) => a.slice(o, o + n).reduce((v, x, i) => v + x * 2 ** (8 * i), 0), count = rd(jlDec(img.subarray(0, 0x40)), 8, 2);
+  for (let i = 0; i < count; i++) {
+    const e = jlDec(img.subarray(0x40 + i * 0x50, 0x90 + i * 0x50));
+    if (rd(e, 0, 2) === 0) return rd(e, 8, 4);
+  }
+  throw new Error("The official firmware has no flash.bin.");
+}
+
 // the image the device addresses during an update: the .fwsc without the marker bytes (20 blocks; the detected
 // count only when the files' CRCs pass with it: a 20-block package can have 0x7D after block 20 by chance)
 export function logicalImage(fwsc) {
@@ -307,8 +317,10 @@ export async function sha256hex(bytes) {
 // data (CHECK HEAD, firmware/src/ota.c) before it starts that loader.
 export async function validateStockPackage(bytes) {
   if (bytes.length === STOCK_SMK016_SIZE && await sha256hex(bytes) === STOCK_SMK016_SHA256 &&
-      productOf(bytes) === STOCK_SMK016_PRODUCT)       // SMK-37 Pro: 36 interleave blocks, its own layout
-    return { product: STOCK_SMK016_PRODUCT, image: logicalImage(bytes), sha256: STOCK_SMK016_SHA256 };
+      productOf(bytes) === STOCK_SMK016_PRODUCT) {     // SMK-37 Pro: 36 interleave blocks, its own layout
+    const image = logicalImage(bytes), head = flashOffset(image);
+    return { product: STOCK_SMK016_PRODUCT, image, sha256: STOCK_SMK016_SHA256, head: { from: head, to: head + 0x4000 } };
+  }
   if (bytes.length !== STOCK_V15_SIZE || await sha256hex(bytes) !== STOCK_V15_SHA256)
     throw new Error("Select the unmodified official FM-1 V15 file (FM-1.fwsc) or SMK-37 Pro V016 file (SMK-37_Pro_016.fwsc).");
   const pkg = new Package(bytes);

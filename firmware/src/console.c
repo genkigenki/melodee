@@ -348,7 +348,7 @@ static void con_padtest(void)
     padled_set(10, 0, 0, 40);
     padled_set(11, 40, 40, 40);
     padled_hold_until = fm1_ms + 20000u;
-    con_puts("top row from the left: red green blue white\r\n");
+    con_puts("bottom row from the left: red green blue white\r\n");
 }
 #endif
 

@@ -229,11 +229,12 @@ static void rec_release(track_t *t, uint32_t note);
 static volatile uint32_t seq_erase_request, seq_erase_generation;
 static uint32_t seq_erase_transport;
 static uint8_t seq_erase_seen[NTRK];
-static volatile uint16_t seq_erase_button;
 #if BOARD_SMK37
+static volatile uint32_t seq_erase_button;              /* (EDIT may be calibrated to button 16 or 17) */
 static volatile uint32_t seq_erase_allow;               /* the buttons that may be held with EDIT (18 on the SMK-37) */
 #define SEQ_ERASE_ALLOW(request) seq_erase_allow
 #else
+static volatile uint16_t seq_erase_button;
 #define SEQ_ERASE_ALLOW(request) (((request) >> 16) & 0x3FFFu)
 #endif
 static int seq_erase_active(const track_t *t);

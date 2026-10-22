@@ -1838,9 +1838,11 @@ static void seq_erase_update(uint32_t pressed)
     uint32_t request = ui.erase_owner && context && (fm1_in.buttons & ed) ?
         0x80000000u | ((ed | rec) << 16) | (ui.erase_owner - 1u) : 0u;
     fm1_irq_off();
-    seq_erase_button = (uint16_t)ed;
 #if BOARD_SMK37
+    seq_erase_button = ed;                              /* (all 18 button bits) */
     seq_erase_allow = request ? ed | rec : 0u;          /* (SMK-37: REC's id is past the request's 14 bits) */
+#else
+    seq_erase_button = (uint16_t)ed;
 #endif
     seq_erase_generation = ui.erase_generation;
     seq_erase_request = request;

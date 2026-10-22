@@ -37,8 +37,8 @@ The FM-1's manual still applies; the SMK-37's controls map onto the FM-1's like 
 | OCTAVE- / OCTAVE+ | OCT- / OCT+ |
 | KNOB BANK | as HOME held: opens or closes the menu (lit while the menu is open) |
 | < / > | one step of SELECT: the previous / next page, pattern, row or note, wherever SELECT turns |
-| FADER BANK | what the faders set (lit off bank A): A the levels of tracks 1..4; B the selected track's filter (PROPHET: CUTOFF, RESONANCE, ENV AMOUNT, filter DECAY; other engines their four HOME knobs); C its amp envelope (A D S R); D its FX rack (the MIX of slots 1-3, the SEND to the shared FX) |
-| Faders 1..4 | as FADER BANK says; a fader takes over only once it moves |
+| FADER BANK | what the faders set (lit off bank A): A the levels of tracks 1..4; B the selected track's filter (PROPHET: CUTOFF, RESONANCE, ENV AMOUNT, filter DECAY; CZ-1 and the other engines their four HOME knobs); C its amp envelope (A D S R); D its FX rack (the MIX of slots 1-3, the SEND to the shared FX) |
+| Faders 1..4 | as FADER BANK says; a fader takes over only once it moves; with NOTE REPEAT held a fader's edit is momentary, as a knob's |
 | Pitch wheel | pitch bend of the selected track (2 semitones; PROPHET its BEND, FM6 its DX7 range) |
 | Mod wheel | the selected track's mod wheel (CC1, the MOD matrix's MODW source; PROPHET and FM6 their own wheel); engines without one get a vibrato unless a MOD slot uses MODW |
 | OCTAVE- + OCTAVE+ held at power-on | HARDWARE CALIBRATION: teach the buttons and knobs again |
